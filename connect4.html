@@ -1,0 +1,1087 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Connect 4</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: Arial, sans-serif;
+    color: white;
+    background: radial-gradient(circle at top, #263f75, #10182e 75%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.container {
+    width: 100%;
+    max-width: 650px;
+    text-align: center;
+}
+
+h1 {
+    font-size: 48px;
+    margin-bottom: 10px;
+    color: #ffd43b;
+    text-shadow: 0 4px 15px #0008;
+}
+
+.subtitle {
+    color: #cbd5e1;
+    margin-bottom: 30px;
+}
+
+.panel {
+    background: #ffffff12;
+    border: 1px solid #ffffff25;
+    border-radius: 20px;
+    padding: 25px;
+    box-shadow: 0 15px 40px #0005;
+}
+
+button {
+    border: none;
+    border-radius: 12px;
+    padding: 14px 22px;
+    margin: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.2s, filter 0.2s;
+}
+
+button:hover {
+    transform: translateY(-3px);
+    filter: brightness(1.1);
+}
+
+.primary {
+    background: #2563eb;
+    color: white;
+    width: 85%;
+    max-width: 320px;
+}
+
+.secondary {
+    background: #334155;
+    color: white;
+}
+
+.yellow {
+    background: #facc15;
+    color: #172033;
+}
+
+input, select {
+    width: 85%;
+    max-width: 320px;
+    padding: 13px;
+    margin: 8px;
+    border-radius: 9px;
+    border: 1px solid #94a3b8;
+    font-size: 16px;
+}
+
+.hidden {
+    display: none !important;
+}
+
+#gameScreen {
+    width: 100%;
+}
+
+.player-info {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 20px 0;
+}
+
+.player {
+    flex: 1;
+    background: #ffffff15;
+    padding: 12px;
+    border-radius: 12px;
+    font-weight: bold;
+    border: 2px solid transparent;
+}
+
+.player.active {
+    border-color: #facc15;
+    box-shadow: 0 0 15px #facc1555;
+}
+
+.red-text {
+    color: #ff5b5b;
+}
+
+.yellow-text {
+    color: #ffdf45;
+}
+
+#status {
+    font-size: 20px;
+    font-weight: bold;
+    margin: 15px 0;
+}
+
+.board {
+    width: 100%;
+    max-width: 560px;
+    margin: 20px auto;
+    padding: 12px;
+    background: linear-gradient(135deg, #2875ed, #1243a8);
+    border-radius: 20px;
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+    box-shadow: 0 12px 25px #0006;
+}
+
+.cell {
+    aspect-ratio: 1;
+    background: #102a58;
+    border-radius: 50%;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    box-shadow: inset 0 4px 8px #0008;
+}
+
+.cell:hover {
+    background: #1b3c75;
+}
+
+.disc {
+    width: 85%;
+    height: 85%;
+    border-radius: 50%;
+    box-shadow:
+        inset -5px -7px 10px #0004,
+        inset 4px 5px 9px #ffffff55,
+        0 3px 6px #0005;
+}
+
+.red {
+    background: radial-gradient(circle at 30% 25%,
+        #ff9b9b, #ef2929 65%, #a90000);
+}
+
+.yellow-disc {
+    background: radial-gradient(circle at 30% 25%,
+        #fff5a6, #ffd21c 65%, #c58b00);
+}
+
+.drop {
+    animation: fall 0.45s cubic-bezier(.2,.8,.3,1);
+}
+
+@keyframes fall {
+    from {
+        transform: translateY(calc(-1 * var(--fall-distance)));
+    }
+    to {
+        transform: translateY(0);
+    }
+}
+
+.controls {
+    margin-top: 15px;
+}
+
+.result {
+    font-size: 24px;
+    color: #facc15;
+    font-weight: bold;
+    margin: 15px;
+}
+
+@media (max-width: 500px) {
+    h1 {
+        font-size: 36px;
+    }
+
+    .board {
+        gap: 5px;
+        padding: 8px;
+    }
+
+    .panel {
+        padding: 15px;
+    }
+
+    button {
+        font-size: 14px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>CONNECT 4</h1>
+    <p class="subtitle">Connect four counters to win!</p>
+
+    <!-- MAIN MENU -->
+
+    <section id="menu" class="panel">
+        <h2>Welcome to Connect 4</h2>
+        <p>Choose how you want to play.</p>
+
+        <button class="primary" onclick="openSetup('pvp')">
+            Player vs Player
+        </button>
+
+        <button class="primary" onclick="openSetup('bot')">
+            Player vs Computer
+        </button>
+    </section>
+
+
+    <!-- SETUP SCREEN -->
+
+    <section id="setup" class="panel hidden">
+
+        <h2>Game Setup</h2>
+
+        <label for="name1">Player 1 Name</label><br>
+        <input id="name1" type="text" placeholder="Enter your name"
+               maxlength="20">
+
+        <div id="player2Setup">
+            <label for="name2">Player 2 Name</label><br>
+            <input id="name2" type="text"
+                   placeholder="Enter Player 2's name"
+                   maxlength="20">
+        </div>
+
+        <div id="difficultySetup" class="hidden">
+            <label for="difficulty">Computer Difficulty</label><br>
+
+            <select id="difficulty">
+                <option>Easy</option>
+                <option>Medium</option>
+                <option>Hard</option>
+            </select>
+        </div>
+
+        <br>
+
+        <button class="yellow" onclick="startGame()">
+            Start Game
+        </button>
+
+        <button class="secondary" onclick="showScreen('menu')">
+            Back
+        </button>
+
+    </section>
+
+
+    <!-- GAME SCREEN -->
+
+    <section id="gameScreen" class="hidden">
+
+        <div class="player-info">
+
+            <div id="player1Box" class="player">
+                <span id="player1Display"></span>
+                <div class="red-text">RED</div>
+            </div>
+
+            <div id="player2Box" class="player">
+                <span id="player2Display"></span>
+                <div class="yellow-text">YELLOW</div>
+            </div>
+
+        </div>
+
+        <div id="status">Player 1's Turn</div>
+
+        <div id="board" class="board"></div>
+
+        <div id="result" class="result"></div>
+
+        <div id="endControls" class="controls hidden">
+
+            <button class="yellow" onclick="newMatch()">
+                New Match
+            </button>
+
+            <button class="secondary" onclick="showScreen('menu')">
+                Main Menu
+            </button>
+
+        </div>
+
+        <div id="playingControls" class="controls">
+
+            <button class="secondary" onclick="showScreen('menu')">
+                Back to Menu
+            </button>
+
+        </div>
+
+    </section>
+
+</div>
+
+
+<script>
+
+// -----------------------------
+// GAME VARIABLES
+// -----------------------------
+
+let board = [];
+let currentPlayer = "R";
+let gameOver = false;
+
+let player1Name = "Player 1";
+let player2Name = "Player 2";
+
+let gameMode = "pvp";
+let difficulty = "Easy";
+
+let computerThinking = false;
+let gameScreen = "menu";
+let matchStarted = false;
+
+
+// -----------------------------
+// SCREEN MANAGEMENT
+// -----------------------------
+
+function showScreen(screenName) {
+
+    gameScreen = screenName;
+
+    document.getElementById("menu").classList.add("hidden");
+    document.getElementById("setup").classList.add("hidden");
+    document.getElementById("gameScreen").classList.add("hidden");
+
+    document.getElementById(screenName).classList.remove("hidden");
+}
+
+
+// -----------------------------
+// OPEN SETUP
+// -----------------------------
+
+function openSetup(mode) {
+
+    gameMode = mode;
+
+    document.getElementById("player2Setup")
+        .classList.toggle("hidden", mode === "bot");
+
+    document.getElementById("difficultySetup")
+        .classList.toggle("hidden", mode === "pvp");
+
+    showScreen("setup");
+}
+
+
+// -----------------------------
+// START GAME
+// -----------------------------
+
+function startGame() {
+
+    player1Name =
+        document.getElementById("name1").value.trim() || "Player 1";
+
+    if (gameMode === "pvp") {
+
+        player2Name =
+            document.getElementById("name2").value.trim() || "Player 2";
+
+    } else {
+
+        player2Name = "Computer";
+        difficulty = document.getElementById("difficulty").value;
+    }
+
+    newMatch();
+}
+
+
+// -----------------------------
+// NEW MATCH
+// -----------------------------
+
+function newMatch() {
+
+    board = [];
+
+    for (let row = 0; row < 6; row++) {
+
+        board.push([]);
+
+        for (let col = 0; col < 7; col++) {
+            board[row].push(" ");
+        }
+    }
+
+    currentPlayer = "R";
+    gameOver = false;
+    computerThinking = false;
+    matchStarted = true;
+
+    document.getElementById("result").textContent = "";
+
+    document.getElementById("endControls").classList.add("hidden");
+    document.getElementById("playingControls").classList.remove("hidden");
+
+    document.getElementById("player1Display").textContent = player1Name;
+    document.getElementById("player2Display").textContent = player2Name;
+
+    showScreen("gameScreen");
+
+    renderBoard();
+    updateTurn();
+}
+
+
+// -----------------------------
+// DRAW BOARD
+// -----------------------------
+
+function renderBoard(lastMove = null) {
+
+    const boardElement = document.getElementById("board");
+
+    boardElement.innerHTML = "";
+
+    for (let row = 0; row < 6; row++) {
+
+        for (let col = 0; col < 7; col++) {
+
+            const cell = document.createElement("div");
+            cell.className = "cell";
+
+            const value = board[row][col];
+
+            if (value !== " ") {
+
+                const disc = document.createElement("div");
+
+                disc.className = "disc " +
+                    (value === "R" ? "red" : "yellow-disc");
+
+                if (lastMove &&
+                    lastMove.row === row &&
+                    lastMove.col === col) {
+
+                    disc.classList.add("drop");
+
+                    disc.style.setProperty(
+                        "--fall-distance",
+                        ((row + 1) * 65) + "px"
+                    );
+                }
+
+                cell.appendChild(disc);
+            }
+
+            cell.addEventListener("click", function() {
+                playMove(col);
+            });
+
+            boardElement.appendChild(cell);
+        }
+    }
+}
+
+
+// -----------------------------
+// UPDATE PLAYER TURN
+// -----------------------------
+
+function updateTurn() {
+
+    const status = document.getElementById("status");
+
+    const p1 = document.getElementById("player1Box");
+    const p2 = document.getElementById("player2Box");
+
+    p1.classList.toggle("active", currentPlayer === "R");
+    p2.classList.toggle("active", currentPlayer === "Y");
+
+    if (currentPlayer === "R") {
+        status.textContent = player1Name + "'s Turn";
+    } else {
+        status.textContent = player2Name + "'s Turn";
+    }
+}
+
+
+// -----------------------------
+// AVAILABLE COLUMNS
+// -----------------------------
+
+function availableColumns(gameBoard) {
+
+    let columns = [];
+
+    for (let col = 0; col < 7; col++) {
+
+        if (gameBoard[0][col] === " ") {
+            columns.push(col);
+        }
+    }
+
+    return columns;
+}
+
+
+// -----------------------------
+// DROP COUNTER
+// -----------------------------
+
+function dropCounter(col, player) {
+
+    for (let row = 5; row >= 0; row--) {
+
+        if (board[row][col] === " ") {
+
+            board[row][col] = player;
+
+            return row;
+        }
+    }
+
+    return -1;
+}
+
+
+// -----------------------------
+// PLAY MOVE
+// -----------------------------
+
+function playMove(col) {
+
+    if (gameOver || computerThinking) {
+        return;
+    }
+
+    if (gameMode === "bot" && currentPlayer === "Y") {
+        return;
+    }
+
+    if (!availableColumns(board).includes(col)) {
+        return;
+    }
+
+    const row = dropCounter(col, currentPlayer);
+
+    renderBoard({row: row, col: col});
+
+    if (checkWinner(row, col, currentPlayer)) {
+
+        endGame(
+            currentPlayer === "R" ? player1Name : player2Name
+        );
+
+        return;
+    }
+
+    if (availableColumns(board).length === 0) {
+
+        endGame(null);
+        return;
+    }
+
+    currentPlayer = currentPlayer === "R" ? "Y" : "R";
+
+    updateTurn();
+
+    if (gameMode === "bot" && currentPlayer === "Y") {
+
+        computerThinking = true;
+
+        document.getElementById("status").textContent =
+            "Computer is thinking...";
+
+        setTimeout(function() {
+
+            const col = computerMove();
+
+            computerThinking = false;
+
+            makeComputerMove(col);
+
+        }, 500);
+    }
+}
+
+
+// -----------------------------
+// COMPUTER MOVE
+// -----------------------------
+
+function makeComputerMove(col) {
+
+    if (gameOver || col === undefined) {
+        return;
+    }
+
+    const row = dropCounter(col, "Y");
+
+    if (row === -1) {
+        return;
+    }
+
+    renderBoard({row: row, col: col});
+
+    if (checkWinner(row, col, "Y")) {
+
+        endGame(player2Name);
+        return;
+    }
+
+    if (availableColumns(board).length === 0) {
+
+        endGame(null);
+        return;
+    }
+
+    currentPlayer = "R";
+    updateTurn();
+}
+
+
+// -----------------------------
+// CHECK WINNER
+// -----------------------------
+
+function checkWinner(row, col, player) {
+
+    const directions = [
+        [0, 1],
+        [1, 0],
+        [1, 1],
+        [1, -1]
+    ];
+
+    for (const direction of directions) {
+
+        let count = 1;
+
+        for (const sign of [-1, 1]) {
+
+            for (let distance = 1; distance < 4; distance++) {
+
+                const newRow =
+                    row + direction[0] * distance * sign;
+
+                const newCol =
+                    col + direction[1] * distance * sign;
+
+                if (
+                    newRow >= 0 && newRow < 6 &&
+                    newCol >= 0 && newCol < 7 &&
+                    board[newRow][newCol] === player
+                ) {
+
+                    count++;
+
+                } else {
+                    break;
+                }
+            }
+        }
+
+        if (count >= 4) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+
+// -----------------------------
+// CHECK ANY WINNER
+// -----------------------------
+
+function hasFour(gameBoard, player) {
+
+    for (let row = 0; row < 6; row++) {
+
+        for (let col = 0; col < 7; col++) {
+
+            if (gameBoard[row][col] !== player) {
+                continue;
+            }
+
+            const directions = [
+                [0, 1],
+                [1, 0],
+                [1, 1],
+                [1, -1]
+            ];
+
+            for (const direction of directions) {
+
+                let count = 1;
+
+                for (const sign of [-1, 1]) {
+
+                    for (let distance = 1; distance < 4; distance++) {
+
+                        const r = row + direction[0] * distance * sign;
+                        const c = col + direction[1] * distance * sign;
+
+                        if (
+                            r >= 0 && r < 6 &&
+                            c >= 0 && c < 7 &&
+                            gameBoard[r][c] === player
+                        ) {
+                            count++;
+                        } else {
+                            break;
+                        }
+                    }
+                }
+
+                if (count >= 4) {
+                    return true;
+                }
+            }
+        }
+    }
+
+    return false;
+}
+
+
+// -----------------------------
+// SIMULATE A MOVE
+// -----------------------------
+
+function simulateMove(gameBoard, col, player) {
+
+    const copy = gameBoard.map(row => row.slice());
+
+    for (let row = 5; row >= 0; row--) {
+
+        if (copy[row][col] === " ") {
+
+            copy[row][col] = player;
+            return copy;
+        }
+    }
+
+    return copy;
+}
+
+
+// -----------------------------
+// EVALUATE BOARD POSITION
+// -----------------------------
+
+function evaluatePosition(gameBoard, player) {
+
+    const opponent = player === "Y" ? "R" : "Y";
+    let score = 0;
+
+    // Prefer controlling the centre column
+
+    for (let row = 0; row < 6; row++) {
+
+        if (gameBoard[row][3] === player) {
+            score += 6;
+        }
+
+        if (gameBoard[row][3] === opponent) {
+            score -= 6;
+        }
+    }
+
+    const directions = [
+        [0, 1],
+        [1, 0],
+        [1, 1],
+        [1, -1]
+    ];
+
+    // Examine every possible group of four
+
+    for (let row = 0; row < 6; row++) {
+
+        for (let col = 0; col < 7; col++) {
+
+            for (const direction of directions) {
+
+                const endRow = row + direction[0] * 3;
+                const endCol = col + direction[1] * 3;
+
+                if (
+                    endRow < 0 || endRow >= 6 ||
+                    endCol < 0 || endCol >= 7
+                ) {
+                    continue;
+                }
+
+                let own = 0;
+                let enemy = 0;
+                let empty = 0;
+
+                for (let i = 0; i < 4; i++) {
+
+                    const r = row + direction[0] * i;
+                    const c = col + direction[1] * i;
+
+                    if (gameBoard[r][c] === player) {
+                        own++;
+                    }
+                    else if (gameBoard[r][c] === opponent) {
+                        enemy++;
+                    }
+                    else {
+                        empty++;
+                    }
+                }
+
+                if (enemy === 0) {
+
+                    if (own === 3 && empty === 1) {
+                        score += 100;
+                    }
+                    else if (own === 2 && empty === 2) {
+                        score += 12;
+                    }
+                    else if (own === 1 && empty === 3) {
+                        score += 2;
+                    }
+                }
+
+                if (own === 0) {
+
+                    if (enemy === 3 && empty === 1) {
+                        score -= 120;
+                    }
+                    else if (enemy === 2 && empty === 2) {
+                        score -= 15;
+                    }
+                }
+            }
+        }
+    }
+
+    return score;
+}
+
+
+// -----------------------------
+// COMPUTER PERSONALITIES
+// -----------------------------
+
+function computerMove() {
+
+    const columns = availableColumns(board);
+
+    if (columns.length === 0) {
+        return undefined;
+    }
+
+    // EASY: RANDOM PLAYER
+
+    if (difficulty === "Easy") {
+
+        return columns[
+            Math.floor(Math.random() * columns.length)
+        ];
+    }
+
+
+    // MEDIUM AND HARD: CHECK FOR IMMEDIATE WIN
+
+    for (const col of columns) {
+
+        const test = simulateMove(board, col, "Y");
+
+        if (hasFour(test, "Y")) {
+            return col;
+        }
+    }
+
+
+    // MEDIUM AND HARD: BLOCK PLAYER'S WIN
+
+    for (const col of columns) {
+
+        const test = simulateMove(board, col, "R");
+
+        if (hasFour(test, "R")) {
+            return col;
+        }
+    }
+
+
+    // MEDIUM: TACTICIAN
+
+    if (difficulty === "Medium") {
+
+        let bestScore = -Infinity;
+        let bestColumns = [];
+
+        for (const col of columns) {
+
+            const test = simulateMove(board, col, "Y");
+
+            const score = evaluatePosition(test, "Y");
+
+            if (score > bestScore) {
+
+                bestScore = score;
+                bestColumns = [col];
+
+            } else if (score === bestScore) {
+
+                bestColumns.push(col);
+            }
+        }
+
+        return bestColumns[
+            Math.floor(Math.random() * bestColumns.length)
+        ];
+    }
+
+
+    // HARD: STRATEGIST
+
+    let bestCol = columns[0];
+    let bestScore = -Infinity;
+
+    for (const col of columns) {
+
+        const computerBoard = simulateMove(board, col, "Y");
+
+        let worstReplyScore = Infinity;
+
+        const playerReplies = availableColumns(computerBoard);
+
+        // Consider every possible player response
+
+        for (const reply of playerReplies) {
+
+            const playerBoard = simulateMove(
+                computerBoard,
+                reply,
+                "R"
+            );
+
+            let replyScore;
+
+            if (hasFour(playerBoard, "R")) {
+
+                replyScore = -100000;
+
+            } else {
+
+                let bestNextScore = -Infinity;
+
+                const nextMoves = availableColumns(playerBoard);
+
+                // Consider the computer's next possible move
+
+                for (const nextCol of nextMoves) {
+
+                    const nextBoard = simulateMove(
+                        playerBoard,
+                        nextCol,
+                        "Y"
+                    );
+
+                    let nextScore;
+
+                    if (hasFour(nextBoard, "Y")) {
+
+                        nextScore = 100000;
+
+                    } else {
+
+                        nextScore = evaluatePosition(
+                            nextBoard,
+                            "Y"
+                        );
+                    }
+
+                    if (nextScore > bestNextScore) {
+                        bestNextScore = nextScore;
+                    }
+                }
+
+                replyScore = bestNextScore === -Infinity
+                    ? 0
+                    : bestNextScore;
+            }
+
+            if (replyScore < worstReplyScore) {
+                worstReplyScore = replyScore;
+            }
+        }
+
+        if (worstReplyScore > bestScore) {
+
+            bestScore = worstReplyScore;
+            bestCol = col;
+        }
+    }
+
+    return bestCol;
+}
+
+
+// -----------------------------
+// END GAME
+// -----------------------------
+
+function endGame(winner) {
+
+    gameOver = true;
+
+    const result = document.getElementById("result");
+
+    if (winner === null) {
+
+        result.textContent = "It's a Draw!";
+
+    } else {
+
+        result.textContent = winner + " Wins!";
+    }
+
+    document.getElementById("status").textContent = "Match Finished";
+
+    document.getElementById("endControls").classList.remove("hidden");
+    document.getElementById("playingControls").classList.add("hidden");
+}
+
+
+// -----------------------------
+// START MENU
+// -----------------------------
+
+showScreen("menu");
+
+</script>
+
+</body>
+</html>
